@@ -1,0 +1,50 @@
+ void loop() {
+  if (!client.connected()) {
+    reconnect();
+    delay(5000);
+    client.publish("casa/lab/temperatura", keyDevice);
+  } 
+  
+  client.loop();
+  
+  //leyendo temperatura
+  temperatura = dht11.readTemperature(false, true);
+  
+  //controlando fallos de lectura de temperatura del sensor
+  if(!isnan(temperatura)){
+    contador=0;
+    respaldo_temp = temperatura;
+    client.publish("casa/lab/temperatura", String(temperatura).c_str());
+    delay(2000);
+  }
+  else{
+    contador++;
+    client.publish("casa/lab/temperatura", String(respaldo_temp).c_str());
+    delay(2000);
+    if(contador > 10){
+      //client.publish("casa/lab/temperatura", "10 veces NAN");
+      dht11.read(true);
+    }
+  }
+  
+  //leyendo humedad
+  humedad = dht11.readHumidity(true);
+  //controlando fallos de lectura de humedad del sensor
+  if(!isnan(humedad)){
+    contador=0;
+    respaldo_humedad = humedad;
+    client.publish("casa/lab/humedad", String(humedad).c_str());
+    delay(2000);
+  }
+  else{
+    client.publish("casa/lab/humedad", String(respaldo_humedad).c_str());
+    delay(2000);
+    contador++;
+    if(contador > 10){
+      //client.publish("casa/lab/humedad", "10 veces NAN");
+      dht11.read(true);
+    }
+  }
+}
+
+aqui publico el mensaje de vida: mosquitto_sub -h localhost -t test
